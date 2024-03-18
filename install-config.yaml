@@ -1,0 +1,49 @@
+additionalTrustBundlePolicy: Proxyonly
+apiVersion: v1
+baseDomain: devcluster.openshift.com
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform:
+    aws:
+      rootVolume:
+        iops: 4000
+        size: 120
+        type: io2 
+      type: c5.4xlarge
+      zones:
+      - us-east-1b
+  replicas: 3
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform:
+    aws:
+      zones:
+      - us-east-1b
+      rootVolume:
+        iops: 4000
+        size: 120
+        type: io2
+      type: m6i.xlarge
+  replicas: 3
+metadata:
+  name: jmoller-multiattach-01
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  aws:
+    region: us-east-1
+publish: External
+pullSecret: REDACTED
+sshKey: | 
+  REDACTED

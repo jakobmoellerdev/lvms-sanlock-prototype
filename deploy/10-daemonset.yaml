@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: lvmlockd
+  namespace: openshift-storage
+spec:
+  selector:
+    matchLabels: &labels
+      app.kubernetes.io/name: lvms-operator-lockd
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      hostPID: true
+      serviceAccountName: lvmlockd
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: false
+      containers:
+        - name: lvmlockd
+          image: quay.io/jmoller/lvms-sanlock-prototype:5b90918
+          command: [ "lvmlockd" ]
+          args:
+            - "--daemon-debug" 
+            - "--gl-type=sanlock"
+            - "--host-id=$(HOST_IP)"
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          volumeMounts:
+            - name: dev
+              mountPath: /dev
+            - name: run-lvm
+              mountPath: /run/lvm
+            - name: run-sanlock
+              mountPath: /run/sanlock
+            - name: run-udev
+              mountPath: /run/udev
+              mountPropagation: HostToContainer
+            - name: sys
+              mountPath: /sys
+              mountPropagation: HostToContainer
+          securityContext:
+            privileged: true
+        - name: sanlock
+          image: quay.io/jmoller/lvms-sanlock-prototype:5b90918
+          command: [ "sanlock" ]
+          args: [ "daemon", "-D", "-w", "0", "-e", "$(NODE_NAME)" ]
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: dev
+              mountPath: /dev
+            - name: run-sanlock
+              mountPath: /run/sanlock
+          securityContext:
+            privileged: true
+      volumes:
+        - name: dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: run-lvm
+          hostPath:
+            path: /run/lvms/lvm
+            type: DirectoryOrCreate
+        - name: run-sanlock
+          emptyDir:
+            medium: Memory
+        - name: run-udev
+          hostPath:
+            path: /run/udev
+            type: Directory
+        - name: sys
+          hostPath:
+            path: /sys
+            type: Directory
+

@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: system:openshift:scc:lvmlockd
+  namespace: openshift-storage
+rules:
+  - apiGroups:
+      - security.openshift.io
+    resourceNames:
+      - lvmlockd
+    resources:
+      - securitycontextconstraints
+    verbs:
+      - use
